@@ -4,29 +4,6 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Example of an raid event:
- * {
- *   "latitude": 48.101338,
- *   "longitude": 11.771721,
- *   "level": 3,
- *   "pokemon_id": 615,
- *   "team_id": 1,
- *   "cp": 18775,
- *   "start": 1609357191,
- *   "end": 1609359891,
- *   "name": "unknown",
- *   "evolution": 0,
- *   "move_1": 218,
- *   "move_2": 116,
- *   "gym_id": "5fc1f212c08f4dfc824e5734a7f056b1.16",
- *   "url": "http://lh3.googleusercontent.com/h1q19Lw0Pyu4SjJx1AA-bFKiKA3K5EcelNX4t5IkEIE3bIRsRj9iVu6aLG7mxAUUY4uZoz1AxrRS86xgJn9sVlPmpBIB",
- *   "form": 0,
- *   "is_ex_raid_eligible": false,
- *   "is_exclusive": false,
- *   "gender": 3,
- *   "costume": 0
- * }
- */
 public class RaidEvent {
 	private double latitude;
 	

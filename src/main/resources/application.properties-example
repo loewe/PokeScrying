@@ -1,0 +1,14 @@
+events.timezone=Europe/Berlin
+events.fences=/MuenchenUmland.xml,/StadtMuenchen.xml
+telegram.botToken={your bot token here}
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.hibernate.dialect=
+
+
+spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+spring.datasource.url=jdbc:mysql://${MYSQL_HOST:localhost}:3306/pkskry
+spring.datasource.username=${MYSQL_USER:pkskry}
+spring.datasource.password=${MYSQL_PASSWORD:pkskry}
+
+logging.level.root=DEBUG

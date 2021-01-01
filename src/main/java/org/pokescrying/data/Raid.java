@@ -7,17 +7,19 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import org.pokescrying.events.RaidEvent;
+
 @Entity
 public class Raid {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 
+	private Long gymId;
+	
 	private long level;
 	
 	private long pokemonId;
-	
-	private long teamId;
 	
 	private long cp;
 	
@@ -36,6 +38,26 @@ public class Raid {
 	private long gender;
 	
 	private long costume;
+	
+	private boolean isExclusive;
+
+	public Raid() {}
+	
+	public Raid(RaidEvent raidEvent, Gym gym) {
+		this.gymId = gym.getId();
+		this.level = raidEvent.getLevel();
+		this.pokemonId = raidEvent.getPokemonId();
+		this.cp = raidEvent.getCp();
+		this.start = raidEvent.getStart();
+		this.end = raidEvent.getEnd();
+		this.evolution = raidEvent.getEvolution();
+		this.move1 = raidEvent.getMove1();
+		this.move2 = raidEvent.getMove2();
+		this.form = raidEvent.getForm();
+		this.gender = raidEvent.getGender();
+		this.costume = raidEvent.getCostume();
+		this.isExclusive = raidEvent.isExclusive();
+	}
 
 	public Long getId() {
 		return id;
@@ -43,6 +65,14 @@ public class Raid {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public Long getGymId() {
+		return gymId;
+	}
+
+	public void setGymId(Long gymId) {
+		this.gymId = gymId;
 	}
 
 	public long getLevel() {
@@ -59,14 +89,6 @@ public class Raid {
 
 	public void setPokemonId(long pokemonId) {
 		this.pokemonId = pokemonId;
-	}
-
-	public long getTeamId() {
-		return teamId;
-	}
-
-	public void setTeamId(long teamId) {
-		this.teamId = teamId;
 	}
 
 	public long getCp() {
@@ -139,5 +161,13 @@ public class Raid {
 
 	public void setCostume(long costume) {
 		this.costume = costume;
+	}
+
+	public boolean isExclusive() {
+		return isExclusive;
+	}
+
+	public void setExclusive(boolean isExclusive) {
+		this.isExclusive = isExclusive;
 	}
 }
