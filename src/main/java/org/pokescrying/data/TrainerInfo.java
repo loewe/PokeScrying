@@ -18,6 +18,8 @@ public class TrainerInfo {
 	private long level;
 	
 	private String friendCode;
+	
+	private boolean confirmed;
 
 	public Long getId() {
 		return id;
@@ -57,5 +59,13 @@ public class TrainerInfo {
 
 	public void setFriendCode(String friendCode) {
 		this.friendCode = friendCode;
+	}
+
+	public boolean isConfirmed() {
+		return confirmed;
+	}
+
+	public void setConfirmed(boolean confirmed) {
+		this.confirmed = confirmed;
 	}
 }

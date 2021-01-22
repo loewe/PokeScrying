@@ -8,4 +8,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface RaidRepository extends CrudRepository<Raid, Long> {
 	List<Raid> findByGymIdAndStart(long gymId, LocalDateTime start);
+	
+	List<Raid> findByEndGreaterThanEqualAndLevelGreaterThanEqualOrderByEndAsc(LocalDateTime now, long level);
 }

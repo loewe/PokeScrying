@@ -12,9 +12,13 @@ public class TelegramChat {
 	private Long id;
 	
 	private long chatId;
-	
-	private String fenceName;
 
+	private String name;
+
+	private String fenceName;
+	
+	private int listMessageId;
+	
 	public Long getId() {
 		return id;
 	}
@@ -31,11 +35,27 @@ public class TelegramChat {
 		this.chatId = chatId;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public String getFenceName() {
 		return fenceName;
 	}
 
 	public void setFenceName(String fenceName) {
 		this.fenceName = fenceName;
+	}
+
+	public int getListMessageId() {
+		return listMessageId;
+	}
+
+	public void setListMessageId(int listMessageId) {
+		this.listMessageId = listMessageId;
 	}
 }

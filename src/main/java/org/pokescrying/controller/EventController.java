@@ -43,7 +43,7 @@ public class EventController {
 
 	@PostMapping("/event")
 	@ResponseBody
-	public void sayHello(@RequestBody(required = true) List<Event> events) {
+	public void handleEvents(@RequestBody(required = true) List<Event> events) {
 		ObjectMapper mapper = createMapper();
 		
 		Set<String> ignoredEvents = new HashSet<>();
@@ -54,6 +54,8 @@ public class EventController {
 		long raidCount = 0;
 	    long gymCount = 0;
 		
+	    LOGGER.info("events called.");
+	    
 		for (Event event : events) {
 			if (event.getType().equals("raid")) {
 				try {
