@@ -11,6 +11,8 @@ public class TrainerInfo {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 
+	private Long telegramId;
+
 	private String trainerName;
 	
 	private long color;
@@ -27,6 +29,14 @@ public class TrainerInfo {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public Long getTelegramId() {
+		return telegramId;
+	}
+
+	public void setTelegramId(Long telegramId) {
+		this.telegramId = telegramId;
 	}
 
 	public String getTrainerName() {
