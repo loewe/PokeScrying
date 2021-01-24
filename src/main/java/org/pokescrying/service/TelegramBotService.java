@@ -2,12 +2,22 @@ package org.pokescrying.service;
 
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
+import org.pokescrying.data.Raid;
+import org.pokescrying.data.TelegramChat;
+import org.pokescrying.data.TrainerInfo;
+import org.pokescrying.repository.RaidRegistrationRepository;
+import org.pokescrying.repository.RaidRepository;
+import org.pokescrying.repository.TelegramChatRepository;
+import org.pokescrying.repository.TrainerInfoRepository;
 import org.pokescrying.service.telegram.Command;
+import org.pokescrying.service.telegram.CommandParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +42,18 @@ public class TelegramBotService {
 
 	private TelegramBot bot;
 	
+	@Autowired
+	private TelegramChatRepository telegramChatRepository;
+	
+	@Autowired
+	private RaidRepository raidRepository;
+	
+	@Autowired
+	private RaidRegistrationRepository raidRegistrationRepository;
+	
+	@Autowired
+	private TrainerInfoRepository trainerInfoRepository;
+	
 	@PostConstruct
 	public void initAPI() {
 		LOGGER.debug("Initializing telegram bot with token: {}", botToken);
@@ -51,19 +73,25 @@ public class TelegramBotService {
 
 				}
 				if (update.message() != null && update.message().chat().type() == Type.Private) {
+					System.out.println("Private: " + update);
 					String[] command = update.message().text().split(" ");
 					
 					if (command.length > 1 && command[0].equals("/start")) {
-						Command action = extractCommand(command[1]);
+						CommandParameter parameter = new CommandParameter();
+						parameter.parse(command[1]);
 						
-						switch (action) {
-							case PRIV_ASK_TO_ACTIVATE_RAID:
-								String[] parameter = command[1].split("|");
-								int chat = parameter[]
+						if (parameter.getCommand().equals(Command.PRIV_ASK_TO_ACTIVATE_RAID)) {
+							Optional<TelegramChat> optTelegramChat = telegramChatRepository.findById(parameter.getChatId());
+							Optional<Raid> optRaid = raidRepository.findById(parameter.getRaidId());
+							Optional<TrainerInfo> optTrainerInfo = trainerInfoRepository.findByTelegramId(update.message().from().id());
+							
+							if (optTelegramChat.isPresent() && optRaid.isPresent()) {
 								
-								break;
-							default:
-								break;
+								
+								
+							}
+							else
+								LOGGER.error("Chat with id {} not found", parameter.getChatId());
 						}
 						
 	//					executeAndCheck(new SendMessage(chatId, text))
@@ -78,12 +106,6 @@ public class TelegramBotService {
 			
 			return UpdatesListener.CONFIRMED_UPDATES_ALL;
 		});
-	}
-
-	private Command extractCommand(String string) {
-		String param = new String(Base64.getDecoder().decode(string));
-		int index = Integer.parseInt(param.split("|")[0]);
-		return Command.values()[index];
 	}
 
 	public InlineKeyboardMarkup createListingKeyboard() {
@@ -137,8 +159,6 @@ public class TelegramBotService {
 	}
 
 	public int updateListing(long chatId, int messageId, String message, InlineKeyboardMarkup keyboard) {
-		BaseResponse response;
-		
 		if (messageId > 0) {
 			EditMessageText replyMarkup = new EditMessageText(chatId, messageId, message).replyMarkup(keyboard);
 			replyMarkup = replyMarkup.parseMode(ParseMode.HTML);

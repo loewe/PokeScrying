@@ -10,7 +10,7 @@ public class RaidRegistration {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
-
+	
 	private long raidId;
 	
 	private long trainerId;
