@@ -40,6 +40,10 @@ public class Raid {
 	private long costume;
 	
 	private boolean isExclusive;
+	
+	private boolean isPublished;
+	
+	private LocalDateTime publishTime;
 
 	public Raid() {}
 	
@@ -57,6 +61,8 @@ public class Raid {
 		this.gender = raidEvent.getGender();
 		this.costume = raidEvent.getCostume();
 		this.isExclusive = raidEvent.isExclusive();
+		this.isPublished = false;
+		this.publishTime = null;
 	}
 
 	public Long getId() {
@@ -169,5 +175,21 @@ public class Raid {
 
 	public void setExclusive(boolean isExclusive) {
 		this.isExclusive = isExclusive;
+	}
+
+	public boolean isPublished() {
+		return isPublished;
+	}
+
+	public void setPublished(boolean isPublished) {
+		this.isPublished = isPublished;
+	}
+
+	public LocalDateTime getPublishTime() {
+		return publishTime;
+	}
+
+	public void setPublishTime(LocalDateTime publishTime) {
+		this.publishTime = publishTime;
 	}
 }

@@ -22,6 +22,7 @@ import org.pokescrying.repository.TelegramChatRepository;
 import org.pokescrying.service.GeolocationService;
 import org.pokescrying.service.TelegramBotService;
 import org.pokescrying.service.telegram.Command;
+import org.pokescrying.service.telegram.CommandParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +96,8 @@ public class TelegramScheduler {
 			for (TelegramChat tgChat : telegramChats) {
 				if (geolocation.isCoordinateInsideFence(gym.getLatitude(), gym.getLongitude(), tgChat.getFenceName())) {
 					StringBuilder listing = listings.get(tgChat);
-					listing.append("<a href=\"https://t.me/PawniardBot?start=").append(packPrivAskToActivateRaid(raid, tgChat)).append("\">");
+					String parameter = CommandParameter.createPrivAskToActivateRaidString(tgChat.getId(), raid.getId());
+					listing.append("<a href=\"https://t.me/PawniardBot?start=").append(parameter).append("\">");
 					listing.append(gym.getName()).append("</a>\n");
 					listing.append("└ ").append(raid.getStart().format(formatHHMM)).append("-").append(raid.getEnd().format(formatHHMM));
 					listing.append(" | ").append(translateIdToPokemon(raid)).append("\n");
@@ -116,12 +118,6 @@ public class TelegramScheduler {
 				telegram.updateListing(chatId, entry.getKey().getListMessageId(), "Kein Raid", telegram.createListingKeyboard());
 			}
 		}
-	}
-
-	private String packPrivAskToActivateRaid(Raid raid, TelegramChat tgChat) {
-		String startCommand = Command.PRIV_ASK_TO_ACTIVATE_RAID.ordinal() + "|" + tgChat.getId() + "|" + raid.getId();
-		startCommand = Base64.getEncoder().encodeToString(startCommand.getBytes());
-		return startCommand;
 	}
 
 	private String translateIdToPokemon(Raid raid) {
