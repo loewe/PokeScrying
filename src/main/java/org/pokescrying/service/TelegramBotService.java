@@ -3,7 +3,7 @@ package org.pokescrying.service;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -11,8 +11,6 @@ import javax.annotation.PostConstruct;
 
 import org.pokescrying.data.Gym;
 import org.pokescrying.data.Raid;
-import org.pokescrying.data.RaidRegistration;
-import org.pokescrying.data.RegistrationType;
 import org.pokescrying.data.TelegramChat;
 import org.pokescrying.data.TrainerInfo;
 import org.pokescrying.repository.GymRepository;
@@ -187,7 +185,66 @@ public class TelegramBotService {
 		if (YesNo.NO.equals(other))
 			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
 		else if (YesNo.YES.equals(other)) {
+			Optional<Raid> optRaid = raidRepository.findById(parameter.getRaidId());
 			
+			if (optRaid.isPresent()) {
+				Raid raid = optRaid.get();
+				
+				boolean prefixHour = false;
+				
+				LocalDateTime start = raid.getStart();
+				LocalDateTime end = raid.getEnd().minus(5, ChronoUnit.MINUTES);
+				
+				if (start.until(end, ChronoUnit.MINUTES) > 60) {
+					prefixHour = true;
+				}
+				
+				while (start.getMinute() % 5 != 0)
+					start.plus(1, ChronoUnit.MINUTES);
+					
+				while (start.until(end, ChronoUnit.MINUTES) > 0) {
+					
+//					
+//					String labelTest = (prefixHour)?start.getHour():""+
+//					
+//					start.getMinute()
+//					
+//					
+//					
+//					start = start.plus(5, ChronoUnit.MINUTES);
+				}
+				
+//				if (start.)
+				
+				
+//				start.getHour()
+//				start.getMinute()
+//
+//				11:54 -> 11:55
+//				12:00 -> 12:00
+//				
+//				if (difference is greater than 60) {
+//					prefixHour = true;
+//				}
+//				
+//				
+//				
+//				
+//				
+//				end.getHour()
+//				end.getMinute
+//				
+				
+			}
+			else {
+				LOGGER.error("Raid with id {} not found.", parameter.getRaidId());
+			}
+			
+//			parameter.getRaidId()
+			
+			
+			
+			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
 		}
 
 //		Raid raid = optRaid.get();
