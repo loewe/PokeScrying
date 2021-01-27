@@ -69,46 +69,59 @@ public class TelegramBotService {
 	
 	@PostConstruct
 	public void initAPI() {
-		LOGGER.debug("Initializing telegram bot with token: {}", botToken);
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("Initializing telegram bot with token: {}", botToken);
 		bot = new TelegramBot(botToken);
 
 		bot.setUpdatesListener(updates -> {
-			LOGGER.info("Received update: {}", updates);
+			if (LOGGER.isInfoEnabled())
+				LOGGER.info("Received {} update.", updates.size());
 			
 			for (var update : updates) {
-				
-				if (update.callbackQuery() != null) {
-//					update.callbackQuery().data()
-				}
-				
-				if (update.callbackQuery() != null) {
-					System.out.println(update.callbackQuery().data());
+				handleUpdate(update);
+			}
+			
+			return UpdatesListener.CONFIRMED_UPDATES_ALL;
+		});
+	}
 
-				}
-				if (update.message() != null && update.message().chat().type() == Type.Private) {
-					System.out.println("Private: " + update);
-					String[] startItems = update.message().text().split(" ");
-					
-					if (startItems.length > 1 && startItems[0].equals("/start")) {
-						CommandParameter parameter = new CommandParameter();
-						parameter.unmarshall(startItems[1]);
-						
-						if (LOGGER.isDebugEnabled()) {
-							LOGGER.debug("Found a bot command: {}", parameter);
-						}
-						
-						
-						if (parameter.getCommand() != null) {
-							Command command = parameter.getCommand();
-						
-							if (command.equals(Command.PRIV_ASK_TO_ACTIVATE_RAID))
-								handlePrivAskToActivateRaid(update, parameter);
-							else if (command.equals(Command.PRIV_CONFIRM_RAID_ACTIVE))
-								handlePrivConfirmRaidActive(update, parameter);
-						}
-						else if (1 == 0) {
-							long trainerId = syncTrainerAndGetId(update.message().from());
-							
+	private void handleUpdate(Update update) {
+		if (update.callbackQuery() != null) {
+			if (LOGGER.isDebugEnabled())
+				LOGGER.debug("Received callback query: {}", update);
+
+			handleBotCommand(update, update.callbackQuery().data());
+		}
+		if (update.message() != null && update.message().chat().type() == Type.Private) {
+			if (LOGGER.isDebugEnabled())
+				LOGGER.debug("Received private message: {}", update);
+			
+			String[] startItems = update.message().text().split(" ");
+			
+			if (startItems.length > 1 && startItems[0].equals("/start"))
+				handleBotCommand(update, startItems[1]);
+		}
+	}
+
+	private void handleBotCommand(Update update, String parameterString) {
+		CommandParameter parameter = new CommandParameter();
+		parameter.unmarshall(parameterString);
+		
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("Found a bot command: {}", parameter);
+		}
+		
+		if (parameter.getCommand() != null) {
+			Command command = parameter.getCommand();
+		
+			if (command.equals(Command.PRIV_ASK_TO_ACTIVATE_RAID))
+				handlePrivAskToActivateRaid(update, parameter);
+			else if (command.equals(Command.PRIV_CONFIRM_RAID_ACTIVE))
+				handlePrivConfirmRaidActive(update, parameter);
+		}
+		else if (1 == 0) {
+			long trainerId = syncTrainerAndGetId(update.message().from());
+			
 //							Optional<RaidRegistration> optRaidRegistration = raidRegistrationRepository.findByRaidIdAndTrainerId(optRaid.get().getId(), trainerId);
 //							if (!optRaidRegistration.isPresent()) {
 //								RaidRegistration registration = new RaidRegistration();
@@ -119,7 +132,7 @@ public class TelegramBotService {
 //								registration.setTimeslot(1);
 //								raidRegistrationRepository.save(registration);
 //							}
-						}
+		}
 //						
 //						
 //						String message = "Willst du den Raid in der Arena '" + gymName + "' um '" + start + "' im Chat '" + chatName + "' ansagen und teilnehmen?";
@@ -127,22 +140,19 @@ public class TelegramBotService {
 //						executeAndCheck(request);
 //						
 //						new SendMessage(update.message().chat().id(), "").replyMarkup(createYNKeyboard(command)).parseMode(ParseMode.HTML));
-						
-	//					executeAndCheck(new SendMessage(chatId, text))
-	//					
-	//					this.updateOrCreateMessage(update.message().chat().id(), 0, "Willst du den Raid in der Arena '' um '' im Chat '' ansagen und teilnehmen?", createYNKeyboard(Command.PRIV_CONFIRM_RAID_ACTIVE));
-						
-						
+		
+//					executeAndCheck(new SendMessage(chatId, text))
+//					
+//					this.updateOrCreateMessage(update.message().chat().id(), 0, "Willst du den Raid in der Arena '' um '' im Chat '' ansagen und teilnehmen?", createYNKeyboard(Command.PRIV_CONFIRM_RAID_ACTIVE));
+		
+		
 //						System.out.println(update.message().from().username() + " " + update.message().from().id() + " " + update.message().text());
-					}
-				}
-			}
-			
-			return UpdatesListener.CONFIRMED_UPDATES_ALL;
-		});
 	}
 
 	private void handlePrivAskToActivateRaid(Update update, CommandParameter parameter) {
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("handlePrivAskToActivateRaid: {}", parameter);
+		
 		Optional<TelegramChat> optTelegramChat = telegramChatRepository.findById(parameter.getChatId());
 		Optional<Raid> optRaid = raidRepository.findById(parameter.getRaidId());
 		
@@ -157,6 +167,7 @@ public class TelegramBotService {
 				parameter.setCommand(Command.PRIV_CONFIRM_RAID_ACTIVE);
 				SendMessage sendMessage = new SendMessage(update.message().chat().id(), message).replyMarkup(createYNKeyboard(parameter)).parseMode(ParseMode.HTML);
 				this.executeAndCheck(sendMessage);
+				this.deleteMessage(update.message().chat().id(), update.message().messageId());
 			}
 		}
 		else {
@@ -168,6 +179,16 @@ public class TelegramBotService {
 	}
 
 	private void handlePrivConfirmRaidActive(Update update, CommandParameter parameter) {
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("handlePrivConfirmRaidActive: {}", parameter);
+		YesNo other = YesNo.values()[(int)parameter.getOption()];
+		
+		System.out.println(parameter);
+		if (YesNo.NO.equals(other))
+			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
+		else if (YesNo.YES.equals(other)) {
+			
+		}
 
 //		Raid raid = optRaid.get();
 //		raid.setPublished(true);
