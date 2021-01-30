@@ -20,6 +20,7 @@ import org.pokescrying.repository.PokedexRepository;
 import org.pokescrying.repository.RaidRepository;
 import org.pokescrying.repository.TelegramChatRepository;
 import org.pokescrying.service.GeolocationService;
+import org.pokescrying.service.PokeScryingService;
 import org.pokescrying.service.TelegramBotService;
 import org.pokescrying.service.telegram.Command;
 import org.pokescrying.service.telegram.CommandParameter;
@@ -51,7 +52,7 @@ public class TelegramScheduler {
 	private TelegramChatRepository telegramChatRepository;
 	
 	@Autowired
-	private PokedexRepository pokedexRepository;
+	private PokeScryingService pokescryingService;
 	
 	@PostConstruct
 	public void initTestChats() {
@@ -100,7 +101,7 @@ public class TelegramScheduler {
 					listing.append("<a href=\"https://t.me/PawniardBot?start=").append(parameter).append("\">");
 					listing.append(gym.getName()).append("</a>\n");
 					listing.append("└ ").append(raid.getStart().format(formatHHMM)).append("-").append(raid.getEnd().format(formatHHMM));
-					listing.append(" | ").append(translateIdToPokemon(raid)).append("\n");
+					listing.append(" | ").append(pokescryingService.translateIdToPokemon(raid)).append("\n");
 				}
 			}
 		}
@@ -117,19 +118,6 @@ public class TelegramScheduler {
 			else {
 				telegram.updateListing(chatId, entry.getKey().getListMessageId(), "Kein Raid", telegram.createListingKeyboard());
 			}
-		}
-	}
-
-	private String translateIdToPokemon(Raid raid) {
-		if (raid.getPokemonId() == 0)
-			return "Raid Level " + raid.getLevel();
-		else {
-			Optional<Pokedex> pokedexEntry = this.pokedexRepository.findById(raid.getPokemonId());
-			if (pokedexEntry.isPresent()) {
-				return pokedexEntry.get().getName();
-			}
-			else
-				return "Pokemon " + raid.getPokemonId();
 		}
 	}
 }

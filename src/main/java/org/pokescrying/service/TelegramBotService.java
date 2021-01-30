@@ -4,16 +4,21 @@ import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.annotation.PostConstruct;
 
+import org.hibernate.internal.build.AllowSysOut;
 import org.pokescrying.data.Gym;
+import org.pokescrying.data.Pokedex;
 import org.pokescrying.data.Raid;
 import org.pokescrying.data.TelegramChat;
 import org.pokescrying.data.TrainerInfo;
 import org.pokescrying.repository.GymRepository;
+import org.pokescrying.repository.PokedexRepository;
 import org.pokescrying.repository.RaidRegistrationRepository;
 import org.pokescrying.repository.RaidRepository;
 import org.pokescrying.repository.TelegramChatRepository;
@@ -64,6 +69,9 @@ public class TelegramBotService {
 	
 	@Autowired
 	private GymRepository gymRepository;
+	
+	@Autowired
+	private PokeScryingService pokescryingService;
 	
 	@PostConstruct
 	public void initAPI() {
@@ -155,12 +163,15 @@ public class TelegramBotService {
 		Optional<Raid> optRaid = raidRepository.findById(parameter.getRaidId());
 		
 		if (optTelegramChat.isPresent() && optRaid.isPresent()) {
-			Optional<Gym> optGym = gymRepository.findById(optRaid.get().getGymId());
+			Raid raid = optRaid.get();
+			Optional<Gym> optGym = gymRepository.findById(raid.getGymId());
 			
 			if (optGym.isPresent()) {
 				String message = ResourceBundle.getBundle("org.pokescrying.messages").getString("privAskToActivateRaidMessage");
-				LocalDateTime start = optRaid.get().getStart();
-				message = MessageFormat.format(message, optGym.get().getName(), formatRaidStart(start), optTelegramChat.get().getName());
+				LocalDateTime start = raid.getStart();
+				
+				String pokemon =  pokescryingService.translateIdToPokemon(raid);
+				message = MessageFormat.format(message, optGym.get().getName(), formatRaidStart(start), optTelegramChat.get().getName(), pokemon);
 				
 				parameter.setCommand(Command.PRIV_CONFIRM_RAID_ACTIVE);
 				SendMessage sendMessage = new SendMessage(update.message().chat().id(), message).replyMarkup(createYNKeyboard(parameter)).parseMode(ParseMode.HTML);
@@ -179,41 +190,19 @@ public class TelegramBotService {
 	private void handlePrivConfirmRaidActive(Update update, CommandParameter parameter) {
 		if (LOGGER.isDebugEnabled())
 			LOGGER.debug("handlePrivConfirmRaidActive: {}", parameter);
-		YesNo other = YesNo.values()[(int)parameter.getOption()];
+		YesNo selectedChoice = YesNo.values()[(int)parameter.getOption()];
 		
 		System.out.println(parameter);
-		if (YesNo.NO.equals(other))
+		if (YesNo.NO.equals(selectedChoice))
 			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
-		else if (YesNo.YES.equals(other)) {
+		else if (YesNo.YES.equals(selectedChoice)) {
 			Optional<Raid> optRaid = raidRepository.findById(parameter.getRaidId());
 			
 			if (optRaid.isPresent()) {
 				Raid raid = optRaid.get();
 				
-				boolean prefixHour = false;
-				
-				LocalDateTime start = raid.getStart();
-				LocalDateTime end = raid.getEnd().minus(5, ChronoUnit.MINUTES);
-				
-				if (start.until(end, ChronoUnit.MINUTES) > 60) {
-					prefixHour = true;
-				}
-				
-				while (start.getMinute() % 5 != 0)
-					start.plus(1, ChronoUnit.MINUTES);
-					
-				while (start.until(end, ChronoUnit.MINUTES) > 0) {
-					
-//					
-//					String labelTest = (prefixHour)?start.getHour():""+
-//					
-//					start.getMinute()
-//					
-//					
-//					
-//					start = start.plus(5, ChronoUnit.MINUTES);
-				}
-				
+				createRaidKeyboard(parameter, raid);
+								
 //				if (start.)
 				
 				
@@ -244,7 +233,7 @@ public class TelegramBotService {
 			
 			
 			
-			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
+//			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
 		}
 
 //		Raid raid = optRaid.get();
@@ -290,7 +279,60 @@ public class TelegramBotService {
 						new InlineKeyboardButton("Abbrechen").callbackData(noString));
 	}
 
-	public InlineKeyboardMarkup createRaidKeyboard() {
+	public InlineKeyboardMarkup createRaidKeyboard(CommandParameter parameter, Raid raid) {
+
+		boolean prefixHour = false;
+		LocalDateTime start = raid.getStart();
+		LocalDateTime end = raid.getEnd().minus(5, ChronoUnit.MINUTES);
+		
+		List<List<InlineKeyboardButton>> lists = new ArrayList<List<InlineKeyboardButton>>();
+
+		if (start.until(end, ChronoUnit.MINUTES) > 60)
+			prefixHour = true;
+		
+		while (start.getMinute() % 5 != 0)
+			start = start.plus(1, ChronoUnit.MINUTES);
+		
+		while (start.until(end, ChronoUnit.MINUTES) >= 0) {
+			StringBuffer label = new StringBuffer();
+			
+			if (prefixHour)
+				label.append(start.getHour()).append(':');
+			
+			if (start.getMinute() < 10)
+				label.append("0");
+			
+			label.append(start.getMinute());
+			
+			
+
+			System.out.println(label.toString());
+			
+			start = start.plus(5, ChronoUnit.MINUTES);
+		}
+		
+
+		String[][] array = new String[lists.size()][];
+		String[] blankArray = new String[0];
+		for(int i=0; i < lists.size(); i++) {
+		    array[i] = lists.get(i).toArray(blankArray);
+		}
+
+
+
+ArrayList<InlineKeyboardButton>
+
+
+
+
+
+InlineKeyboardButton[][] keyboard = new InlineKeyboardButton[][];
+
+
+		
+		
+		System.out.println(start);
+
 		return new InlineKeyboardMarkup(
 				new InlineKeyboardButton[] { new InlineKeyboardButton("5").callbackData("slot"),
 						new InlineKeyboardButton("10").callbackData("slot"),
