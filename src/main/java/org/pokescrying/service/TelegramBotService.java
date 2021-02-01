@@ -48,6 +48,8 @@ import com.pengrad.telegrambot.response.SendResponse;
 
 @Component
 public class TelegramBotService {
+	private static final ResourceBundle BUNDLE = ResourceBundle.getBundle("org.pokescrying.messages");
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(TelegramBotService.class);
 
 	@Value("${telegram.botToken}")
@@ -92,20 +94,25 @@ public class TelegramBotService {
 	}
 
 	private void handleUpdate(Update update) {
-		if (update.callbackQuery() != null) {
-			if (LOGGER.isDebugEnabled())
-				LOGGER.debug("Received callback query: {}", update);
+		try {
+			if (update.callbackQuery() != null) {
+				if (LOGGER.isDebugEnabled())
+					LOGGER.debug("Received callback query: {}", update);
 
-			handleBotCommand(update, update.callbackQuery().data());
+				handleBotCommand(update, update.callbackQuery().data());
+			}
+			if (update.message() != null && update.message().chat().type() == Type.Private) {
+				if (LOGGER.isDebugEnabled())
+					LOGGER.debug("Received private message: {}", update);
+				
+				String[] startItems = update.message().text().split(" ");
+				
+				if (startItems.length > 1 && startItems[0].equals("/start"))
+					handleBotCommand(update, startItems[1]);
+			}
 		}
-		if (update.message() != null && update.message().chat().type() == Type.Private) {
-			if (LOGGER.isDebugEnabled())
-				LOGGER.debug("Received private message: {}", update);
-			
-			String[] startItems = update.message().text().split(" ");
-			
-			if (startItems.length > 1 && startItems[0].equals("/start"))
-				handleBotCommand(update, startItems[1]);
+		catch (Exception e) {
+			LOGGER.error("Caught an exception: " , e);
 		}
 	}
 
@@ -167,7 +174,7 @@ public class TelegramBotService {
 			Optional<Gym> optGym = gymRepository.findById(raid.getGymId());
 			
 			if (optGym.isPresent()) {
-				String message = ResourceBundle.getBundle("org.pokescrying.messages").getString("privAskToActivateRaidMessage");
+				String message = BUNDLE.getString("privAskToActivateRaidMessage");
 				LocalDateTime start = raid.getStart();
 				
 				String pokemon =  pokescryingService.translateIdToPokemon(raid);
@@ -200,40 +207,17 @@ public class TelegramBotService {
 			
 			if (optRaid.isPresent()) {
 				Raid raid = optRaid.get();
+				parameter.setCommand(Command.PRIV_ASK_SLOT_N_TYPE);
 				
-				createRaidKeyboard(parameter, raid);
-								
-//				if (start.)
-				
-				
-//				start.getHour()
-//				start.getMinute()
-//
-//				11:54 -> 11:55
-//				12:00 -> 12:00
-//				
-//				if (difference is greater than 60) {
-//					prefixHour = true;
-//				}
-//				
-//				
-//				
-//				
-//				
-//				end.getHour()
-//				end.getMinute
-//				
+				String quest = BUNDLE.getString("privAskSlotNType");
+				SendMessage sendMessage = new SendMessage(update.callbackQuery().message().chat().id(), quest).replyMarkup(createRaidKeyboard(parameter, raid)).parseMode(ParseMode.HTML);
+				this.executeAndCheck(sendMessage);
 				
 			}
 			else {
 				LOGGER.error("Raid with id {} not found.", parameter.getRaidId());
 			}
-			
-//			parameter.getRaidId()
-			
-			
-			
-//			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
+			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
 		}
 
 //		Raid raid = optRaid.get();
@@ -280,12 +264,11 @@ public class TelegramBotService {
 	}
 
 	public InlineKeyboardMarkup createRaidKeyboard(CommandParameter parameter, Raid raid) {
-
 		boolean prefixHour = false;
 		LocalDateTime start = raid.getStart();
 		LocalDateTime end = raid.getEnd().minus(5, ChronoUnit.MINUTES);
 		
-		List<List<InlineKeyboardButton>> lists = new ArrayList<List<InlineKeyboardButton>>();
+		List<InlineKeyboardButton> lists = new ArrayList<>();
 
 		if (start.until(end, ChronoUnit.MINUTES) > 60)
 			prefixHour = true;
@@ -303,50 +286,71 @@ public class TelegramBotService {
 				label.append("0");
 			
 			label.append(start.getMinute());
-			
-			
 
-			System.out.println(label.toString());
+			parameter.setOption(start.getHour() * 100L + start.getMinute());
+			lists.add(new InlineKeyboardButton(label.toString()).callbackData(parameter.marshall()));
+			System.out.println("add label: " + label.toString() + " " + parameter.getOption());
 			
 			start = start.plus(5, ChronoUnit.MINUTES);
 		}
 		
-
-		String[][] array = new String[lists.size()][];
-		String[] blankArray = new String[0];
-		for(int i=0; i < lists.size(); i++) {
-		    array[i] = lists.get(i).toArray(blankArray);
+		int width = prefixHour?5:10;
+		int height = lists.size()/width + 2;
+		
+		InlineKeyboardButton[][] keyboard = new InlineKeyboardButton[height][];
+		
+		System.out.println(lists.size());
+		
+		for (int i = 0;i < height-1;i++) {
+			System.out.println(i + " -> " + i*width + ", " + Math.min(i + width, lists.size()-1));
+			keyboard[i] = new ArrayList<>(lists.subList(i*width, Math.min(i + width, lists.size()-1))).toArray(new InlineKeyboardButton[0]);
 		}
+		
+		keyboard[height-1] = new InlineKeyboardButton[] {new InlineKeyboardButton("Test").callbackData(parameter.marshall())};
+		
+		System.out.println(keyboard.length);
+		System.out.println(keyboard);
+		
+		InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(keyboard);
+		System.out.println(inlineKeyboardMarkup);
+		return inlineKeyboardMarkup;
+		
+
+//		String[][] array = new String[lists.size()][];
+//		String[] blankArray = new String[0];
+//		for(int i=0; i < lists.size(); i++) {
+//		    array[i] = lists.get(i).toArray(blankArray);
+//		}
 
 
 
-ArrayList<InlineKeyboardButton>
+//ArrayList<InlineKeyboardButton>
 
 
 
 
 
-InlineKeyboardButton[][] keyboard = new InlineKeyboardButton[][];
+//InlineKeyboardButton[][] keyboard = new InlineKeyboardButton[][];
 
 
 		
 		
-		System.out.println(start);
+//		System.out.println(start);
 
-		return new InlineKeyboardMarkup(
-				new InlineKeyboardButton[] { new InlineKeyboardButton("5").callbackData("slot"),
-						new InlineKeyboardButton("10").callbackData("slot"),
-						new InlineKeyboardButton("15").callbackData("slot"),
-						new InlineKeyboardButton("20").callbackData("slot"),
-						new InlineKeyboardButton("25").callbackData("slot"),
-						new InlineKeyboardButton("30").callbackData("slot"),
-						new InlineKeyboardButton("35").callbackData("slot"), },
-				new InlineKeyboardButton[] { new InlineKeyboardButton("40").callbackData("slot"),
-						new InlineKeyboardButton("+1").callbackData("register_extra"),
-						new InlineKeyboardButton("\u2708").callbackData("type_remote"),
-						new InlineKeyboardButton(new String(Character.toChars(0x1F64F))).callbackData("type_invite"),
-						new InlineKeyboardButton("\u274C").callbackData("cancel"),
-						new InlineKeyboardButton(new String(Character.toChars(0x1F4DC))).callbackData("comment") });
+//		return new InlineKeyboardMarkup(
+//				new InlineKeyboardButton[] { new InlineKeyboardButton("5").callbackData("slot"),
+//						new InlineKeyboardButton("10").callbackData("slot"),
+//						new InlineKeyboardButton("15").callbackData("slot"),
+//						new InlineKeyboardButton("20").callbackData("slot"),
+//						new InlineKeyboardButton("25").callbackData("slot"),
+//						new InlineKeyboardButton("30").callbackData("slot"),
+//						new InlineKeyboardButton("35").callbackData("slot"), },
+//				new InlineKeyboardButton[] { new InlineKeyboardButton("40").callbackData("slot"),
+//						new InlineKeyboardButton("+1").callbackData("register_extra"),
+//						new InlineKeyboardButton("\u2708").callbackData("type_remote"),
+//						new InlineKeyboardButton(new String(Character.toChars(0x1F64F))).callbackData("type_invite"),
+//						new InlineKeyboardButton("\u274C").callbackData("cancel"),
+//						new InlineKeyboardButton(new String(Character.toChars(0x1F4DC))).callbackData("comment") });
 	}
 	
 	private SendResponse executeAndCheck(SendMessage request) {
