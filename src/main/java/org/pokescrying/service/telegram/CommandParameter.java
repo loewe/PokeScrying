@@ -26,6 +26,11 @@ public class CommandParameter {
 	public void setRaidId(long raidId) {
 		this.raidId = raidId;
 	}
+	
+	public CommandParameter option(long option) {
+		this.setOption(option);
+		return this;
+	}
 
 	public long getOption() {
 		return option;
@@ -66,7 +71,7 @@ public class CommandParameter {
 			this.chatId = Long.parseLong(parameters[1]);
 			this.raidId = Long.parseLong(parameters[2]);
 		}
-		else if (command.equals(Command.PRIV_CONFIRM_RAID_ACTIVE)) {
+		else if (command.equals(Command.PRIV_CONFIRM_RAID_ACTIVE) || command.equals(Command.PRIV_ASK_SLOT_N_TYPE)) {
 			this.chatId = Long.parseLong(parameters[1]);
 			this.raidId = Long.parseLong(parameters[2]);
 			this.option = Long.parseLong(parameters[3]);
@@ -78,7 +83,7 @@ public class CommandParameter {
 			String join = String.join("|", Integer.toString(this.command.ordinal()), Long.toString(this.chatId), Long.toString(this.raidId));
 			return Base64.getEncoder().encodeToString(join.getBytes());
 		}
-		else if(command.equals(Command.PRIV_CONFIRM_RAID_ACTIVE)) {
+		else if(command.equals(Command.PRIV_CONFIRM_RAID_ACTIVE) || command.equals(Command.PRIV_ASK_SLOT_N_TYPE)) {
 			String join = String.join("|", 
 					Integer.toString(this.command.ordinal()), 
 					Long.toString(this.chatId), 
