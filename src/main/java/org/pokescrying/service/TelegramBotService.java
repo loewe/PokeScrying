@@ -11,20 +11,18 @@ import java.util.ResourceBundle;
 
 import javax.annotation.PostConstruct;
 
-import org.hibernate.internal.build.AllowSysOut;
 import org.pokescrying.data.Gym;
-import org.pokescrying.data.Pokedex;
 import org.pokescrying.data.Raid;
 import org.pokescrying.data.TelegramChat;
 import org.pokescrying.data.TrainerInfo;
 import org.pokescrying.repository.GymRepository;
-import org.pokescrying.repository.PokedexRepository;
 import org.pokescrying.repository.RaidRegistrationRepository;
 import org.pokescrying.repository.RaidRepository;
 import org.pokescrying.repository.TelegramChatRepository;
 import org.pokescrying.repository.TrainerInfoRepository;
 import org.pokescrying.service.telegram.Command;
 import org.pokescrying.service.telegram.CommandParameter;
+import org.pokescrying.service.telegram.RaidOption;
 import org.pokescrying.service.telegram.YesNo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,7 +197,6 @@ public class TelegramBotService {
 			LOGGER.debug("handlePrivConfirmRaidActive: {}", parameter);
 		YesNo selectedChoice = YesNo.values()[(int)parameter.getOption()];
 		
-		System.out.println(parameter);
 		if (YesNo.NO.equals(selectedChoice))
 			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
 		else if (YesNo.YES.equals(selectedChoice)) {
@@ -219,12 +216,6 @@ public class TelegramBotService {
 			}
 			this.deleteMessage(update.callbackQuery().message().chat().id(), update.callbackQuery().message().messageId());
 		}
-
-//		Raid raid = optRaid.get();
-//		raid.setPublished(true);
-//		raid.setPublishTime(LocalDateTime.now());
-//		this.raidRepository.save(raid);
-//
 	}
 
 	private String formatRaidStart(LocalDateTime start) {
@@ -277,7 +268,7 @@ public class TelegramBotService {
 			start = start.plus(1, ChronoUnit.MINUTES);
 		
 		while (start.until(end, ChronoUnit.MINUTES) >= 0) {
-			StringBuffer label = new StringBuffer();
+			StringBuilder label = new StringBuilder();
 			
 			if (prefixHour)
 				label.append(start.getHour()).append(':');
@@ -289,7 +280,9 @@ public class TelegramBotService {
 
 			parameter.setOption(start.getHour() * 100L + start.getMinute());
 			lists.add(new InlineKeyboardButton(label.toString()).callbackData(parameter.marshall()));
-			System.out.println("add label: " + label.toString() + " " + parameter.getOption());
+			
+			if (LOGGER.isDebugEnabled())
+				LOGGER.debug("calc time {} with label {}.", parameter.getOption(), label);
 			
 			start = start.plus(5, ChronoUnit.MINUTES);
 		}
@@ -299,58 +292,24 @@ public class TelegramBotService {
 		
 		InlineKeyboardButton[][] keyboard = new InlineKeyboardButton[height][];
 		
-		System.out.println(lists.size());
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("Calculated {} times.", lists.size());
 		
 		for (int i = 0;i < height-1;i++) {
-			System.out.println(i + " -> " + i*width + ", " + Math.min(i + width, lists.size()-1));
+			if (LOGGER.isDebugEnabled())
+				LOGGER.debug("Segmenting the times into row {} from {} to {}.", i, i*width, Math.min(i + width, lists.size()-1));
 			keyboard[i] = new ArrayList<>(lists.subList(i*width, Math.min(i + width, lists.size()-1))).toArray(new InlineKeyboardButton[0]);
 		}
+		keyboard[height-1] = new InlineKeyboardButton[] {
+			new InlineKeyboardButton("\u274C").callbackData(parameter.option(RaidOption.CANCEL.ordinal()).marshall()),
+			new InlineKeyboardButton("+1").callbackData(parameter.option(RaidOption.PLUS1.ordinal()).marshall()),
+			new InlineKeyboardButton("\u2708").callbackData(parameter.option(RaidOption.REMOTE.ordinal()).marshall()),
+			new InlineKeyboardButton("\uD83D\uDE4F").callbackData(parameter.option(RaidOption.INVITE.ordinal()).marshall())
+			,new InlineKeyboardButton("Fertig").callbackData(parameter.option(RaidOption.COMMENT.ordinal()).marshall())
+		};
+		// new String(Character.toChars(0x1F4DC))
 		
-		keyboard[height-1] = new InlineKeyboardButton[] {new InlineKeyboardButton("Test").callbackData(parameter.marshall())};
-		
-		System.out.println(keyboard.length);
-		System.out.println(keyboard);
-		
-		InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(keyboard);
-		System.out.println(inlineKeyboardMarkup);
-		return inlineKeyboardMarkup;
-		
-
-//		String[][] array = new String[lists.size()][];
-//		String[] blankArray = new String[0];
-//		for(int i=0; i < lists.size(); i++) {
-//		    array[i] = lists.get(i).toArray(blankArray);
-//		}
-
-
-
-//ArrayList<InlineKeyboardButton>
-
-
-
-
-
-//InlineKeyboardButton[][] keyboard = new InlineKeyboardButton[][];
-
-
-		
-		
-//		System.out.println(start);
-
-//		return new InlineKeyboardMarkup(
-//				new InlineKeyboardButton[] { new InlineKeyboardButton("5").callbackData("slot"),
-//						new InlineKeyboardButton("10").callbackData("slot"),
-//						new InlineKeyboardButton("15").callbackData("slot"),
-//						new InlineKeyboardButton("20").callbackData("slot"),
-//						new InlineKeyboardButton("25").callbackData("slot"),
-//						new InlineKeyboardButton("30").callbackData("slot"),
-//						new InlineKeyboardButton("35").callbackData("slot"), },
-//				new InlineKeyboardButton[] { new InlineKeyboardButton("40").callbackData("slot"),
-//						new InlineKeyboardButton("+1").callbackData("register_extra"),
-//						new InlineKeyboardButton("\u2708").callbackData("type_remote"),
-//						new InlineKeyboardButton(new String(Character.toChars(0x1F64F))).callbackData("type_invite"),
-//						new InlineKeyboardButton("\u274C").callbackData("cancel"),
-//						new InlineKeyboardButton(new String(Character.toChars(0x1F4DC))).callbackData("comment") });
+		return new InlineKeyboardMarkup(keyboard);
 	}
 	
 	private SendResponse executeAndCheck(SendMessage request) {

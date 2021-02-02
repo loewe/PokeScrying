@@ -3,7 +3,6 @@ package org.pokescrying.scheduler;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,17 +11,14 @@ import java.util.Optional;
 import javax.annotation.PostConstruct;
 
 import org.pokescrying.data.Gym;
-import org.pokescrying.data.Pokedex;
 import org.pokescrying.data.Raid;
 import org.pokescrying.data.TelegramChat;
 import org.pokescrying.repository.GymRepository;
-import org.pokescrying.repository.PokedexRepository;
 import org.pokescrying.repository.RaidRepository;
 import org.pokescrying.repository.TelegramChatRepository;
 import org.pokescrying.service.GeolocationService;
 import org.pokescrying.service.PokeScryingService;
 import org.pokescrying.service.TelegramBotService;
-import org.pokescrying.service.telegram.Command;
 import org.pokescrying.service.telegram.CommandParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +74,9 @@ public class TelegramScheduler {
 	    Map<TelegramChat, StringBuilder> listings = new HashMap<>();
 		List<TelegramChat> telegramChats = new ArrayList<>();
 		telegramChatRepository.findAll().forEach(telegramChats::add);
-		LOGGER.info("Test");
+		
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("Calling sceduler");
 		
 		for (TelegramChat tgChat : telegramChats)
 			if (!listings.containsKey(tgChat))
