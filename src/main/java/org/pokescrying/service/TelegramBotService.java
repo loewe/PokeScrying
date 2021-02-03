@@ -204,11 +204,22 @@ public class TelegramBotService {
 			
 			if (optRaid.isPresent()) {
 				Raid raid = optRaid.get();
-				parameter.setCommand(Command.PRIV_ASK_SLOT_N_TYPE);
 				
-				String quest = BUNDLE.getString("privAskSlotNType");
-				SendMessage sendMessage = new SendMessage(update.callbackQuery().message().chat().id(), quest).replyMarkup(createRaidKeyboard(parameter, raid)).parseMode(ParseMode.HTML);
-				this.executeAndCheck(sendMessage);
+				Optional<Gym> optGym = gymRepository.findById(raid.getGymId());
+				
+				if (optGym.isPresent()) {
+					Gym gym = optGym.get();
+					parameter.setCommand(Command.PRIV_ASK_SLOT_N_TYPE);
+					
+					String quest = BUNDLE.getString("privAskSlotNType");
+					
+					String pokemon = pokescryingService.translateIdToPokemon(raid);
+					quest = MessageFormat.format(quest, pokemon, gym.getName(), formatRaidStart(raid.getStart()), formatRaidStart(raid.getEnd()));
+					
+					
+					SendMessage sendMessage = new SendMessage(update.callbackQuery().message().chat().id(), quest).replyMarkup(createRaidKeyboard(parameter, raid)).parseMode(ParseMode.HTML);
+					this.executeAndCheck(sendMessage);
+				}
 				
 			}
 			else {
