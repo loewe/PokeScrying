@@ -129,6 +129,8 @@ public class TelegramBotService {
 				handlePrivAskToActivateRaid(update, parameter);
 			else if (command.equals(Command.PRIV_CONFIRM_RAID_ACTIVE))
 				handlePrivConfirmRaidActive(update, parameter);
+			else if (command.equals(Command.PRIV_ASK_SLOT_N_TYPE))
+				System.out.println(command);
 		}
 		else if (1 == 0) {
 			long trainerId = syncTrainerAndGetId(update.message().from());
@@ -216,11 +218,9 @@ public class TelegramBotService {
 					String pokemon = pokescryingService.translateIdToPokemon(raid);
 					quest = MessageFormat.format(quest, pokemon, gym.getName(), formatRaidStart(raid.getStart()), formatRaidStart(raid.getEnd()));
 					
-					
 					SendMessage sendMessage = new SendMessage(update.callbackQuery().message().chat().id(), quest).replyMarkup(createRaidKeyboard(parameter, raid)).parseMode(ParseMode.HTML);
 					this.executeAndCheck(sendMessage);
 				}
-				
 			}
 			else {
 				LOGGER.error("Raid with id {} not found.", parameter.getRaidId());
