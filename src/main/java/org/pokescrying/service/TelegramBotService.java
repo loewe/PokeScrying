@@ -13,6 +13,8 @@ import javax.annotation.PostConstruct;
 
 import org.pokescrying.data.Gym;
 import org.pokescrying.data.Raid;
+import org.pokescrying.data.RaidRegistration;
+import org.pokescrying.data.RegistrationType;
 import org.pokescrying.data.TelegramChat;
 import org.pokescrying.data.TrainerInfo;
 import org.pokescrying.repository.GymRepository;
@@ -130,10 +132,10 @@ public class TelegramBotService {
 			else if (command.equals(Command.PRIV_CONFIRM_RAID_ACTIVE))
 				handlePrivConfirmRaidActive(update, parameter);
 			else if (command.equals(Command.PRIV_ASK_SLOT_N_TYPE))
-				System.out.println(command);
+				handlePrivAskSlotNType(update, parameter);
 		}
 		else if (1 == 0) {
-			long trainerId = syncTrainerAndGetId(update.message().from());
+//			long trainerId = syncTrainerAndGetId(update.message().from());
 			
 //							Optional<RaidRegistration> optRaidRegistration = raidRegistrationRepository.findByRaidIdAndTrainerId(optRaid.get().getId(), trainerId);
 //							if (!optRaidRegistration.isPresent()) {
@@ -160,6 +162,22 @@ public class TelegramBotService {
 		
 		
 //						System.out.println(update.message().from().username() + " " + update.message().from().id() + " " + update.message().text());
+	}
+
+	private void handlePrivAskSlotNType(Update update, CommandParameter parameter) {
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("handlePrivAskSlotNType: {}", parameter);
+		
+		TrainerInfo info = syncAndGetTrainer(update.message().from());
+		
+		
+		RaidRegistration registration = new RaidRegistration();
+		registration.setExtra(0);
+		registration.setRaidId(parameter.getRaidId());
+		registration.setTimeslot(parameter.getOption());
+		registration.setTrainerId(info.getId());
+		registration.setType(RegistrationType.LOCAL);
+		this.raidRegistrationRepository.save(registration);
 	}
 
 	private void handlePrivAskToActivateRaid(Update update, CommandParameter parameter) {
@@ -233,19 +251,18 @@ public class TelegramBotService {
 		return DateTimeFormatter.ofPattern("HH:mm").format(start);
 	}
 
-	private long syncTrainerAndGetId(User user) {
+	private TrainerInfo syncAndGetTrainer(User user) {
 		Optional<TrainerInfo> optTrainerInfo = trainerInfoRepository.findByTelegramId(user.id().longValue());
 		
 		if (optTrainerInfo.isPresent()) {
-			TrainerInfo trainerInfo = optTrainerInfo.get();
-			return trainerInfo.getId();
+			return optTrainerInfo.get();
 		}
 		else {
 			TrainerInfo trainerInfo = new TrainerInfo();
 			trainerInfo.setTrainerName(user.username());
 			trainerInfo.setTelegramId(user.id().longValue());
 			trainerInfoRepository.save(trainerInfo);
-			return trainerInfo.getId();
+			return trainerInfo;
 		}
 	}
 
