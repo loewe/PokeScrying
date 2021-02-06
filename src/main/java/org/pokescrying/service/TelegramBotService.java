@@ -170,14 +170,21 @@ public class TelegramBotService {
 		
 		TrainerInfo info = syncAndGetTrainer(update.message().from());
 		
-		
-		RaidRegistration registration = new RaidRegistration();
-		registration.setExtra(0);
-		registration.setRaidId(parameter.getRaidId());
-		registration.setTimeslot(parameter.getOption());
-		registration.setTrainerId(info.getId());
-		registration.setType(RegistrationType.LOCAL);
-		this.raidRegistrationRepository.save(registration);
+		Optional<RaidRegistration> optRaidRegistration = raidRegistrationRepository.findByRaidIdAndTrainerId(parameter.getRaidId(), info.getId());
+		if (optRaidRegistration.isPresent()) {
+			RaidRegistration registration = optRaidRegistration.get();
+			registration.setTimeslot(parameter.getOption());
+			this.raidRegistrationRepository.save(registration);
+		}
+		else {
+			RaidRegistration registration = new RaidRegistration();
+			registration.setExtra(0);
+			registration.setRaidId(parameter.getRaidId());
+			registration.setTimeslot(parameter.getOption());
+			registration.setTrainerId(info.getId());
+			registration.setType(RegistrationType.LOCAL);
+			this.raidRegistrationRepository.save(registration);
+		}
 	}
 
 	private void handlePrivAskToActivateRaid(Update update, CommandParameter parameter) {
